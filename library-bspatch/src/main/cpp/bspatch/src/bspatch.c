@@ -38,6 +38,13 @@ __FBSDID("$FreeBSD: src/usr.bin/bsdiff/bspatch/bspatch.c,v 1.1 2005/08/06 01:59:
 
 #include "bzip2-1.0.6/bzlib.h"
 
+#include <jni.h>
+#include <android/log.h>
+
+#define LOGD(fmt, args...) __android_log_print(ANDROID_LOG_DEBUG, "bspatch", fmt, ##args)
+#define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, "bspatch", fmt, ##args)
+#define LOGE_STATUS(status, fmt, args...) __android_log_print(ANDROID_LOG_ERROR, "bspatch", fmt, ##args)
+
 static off_t offtin(u_char *buf) {
     off_t y;
 
@@ -76,11 +83,16 @@ int patchMethod(int argc, char *argv[]) {
     off_t lenread;
     off_t i;
 
-    if (argc != 4) errx(1, "usage: %s oldfile newfile patchfile\n", argv[0]);
+    if (argc != 4) {
+        LOGE_STATUS(1, "usage: %s oldfile newfile patchfile\n", argv[0]);
+        return -1;
+    }
 
     /* Open patch file */
-    if ((f = fopen(argv[3], "r")) == NULL)
-        err(1, "fopen(%s)", argv[3]);
+    if ((f = fopen(argv[3], "r")) == NULL){
+        LOGE_STATUS(1, "patch file open failure, fopen(%s)", argv[3]);
+        return -1;
+    }
 
     /*
     File format:
@@ -99,54 +111,82 @@ int patchMethod(int argc, char *argv[]) {
     /* Read header */
     if (fread(header, 1, 32, f) < 32) {
         if (feof(f))
-            errx(1, "Corrupt patch\n");
-        err(1, "fread(%s)", argv[3]);
+            LOGE_STATUS(1, "Corrupt patch\n");
+        LOGE_STATUS(1, "fread(%s)", argv[3]);
+
+        return -1;
     }
 
     /* Check for appropriate magic */
-    if (memcmp(header, "BSDIFF40", 8) != 0)
-        errx(1, "Corrupt patch\n");
+    if (memcmp(header, "BSDIFF40", 8) != 0){
+        LOGE_STATUS(1, "Corrupt patch\n");
+        return -1;
+    }
 
     /* Read lengths from header */
     bzctrllen = offtin(header + 8);
     bzdatalen = offtin(header + 16);
     newsize = offtin(header + 24);
-    if ((bzctrllen < 0) || (bzdatalen < 0) || (newsize < 0))
-        errx(1, "Corrupt patch\n");
+    if ((bzctrllen < 0) || (bzdatalen < 0) || (newsize < 0)){
+        LOGE_STATUS(1, "Corrupt patch\n");
+        return -1;
+    }
 
     /* Close patch file and re-open it via libbzip2 at the right places */
-    if (fclose(f))
-        err(1, "fclose(%s)", argv[3]);
-    if ((cpf = fopen(argv[3], "r")) == NULL)
-        err(1, "fopen(%s)", argv[3]);
-    if (fseeko(cpf, 32, SEEK_SET))
-        err(1, "fseeko(%s, %lld)", argv[3],
-            (long long) 32);
-    if ((cpfbz2 = BZ2_bzReadOpen(&cbz2err, cpf, 0, 0, NULL, 0)) == NULL)
-        errx(1, "BZ2_bzReadOpen, bz2err = %d", cbz2err);
-    if ((dpf = fopen(argv[3], "r")) == NULL)
-        err(1, "fopen(%s)", argv[3]);
-    if (fseeko(dpf, 32 + bzctrllen, SEEK_SET))
-        err(1, "fseeko(%s, %lld)", argv[3],
-            (long long) (32 + bzctrllen));
-    if ((dpfbz2 = BZ2_bzReadOpen(&dbz2err, dpf, 0, 0, NULL, 0)) == NULL)
-        errx(1, "BZ2_bzReadOpen, bz2err = %d", dbz2err);
-    if ((epf = fopen(argv[3], "r")) == NULL)
-        err(1, "fopen(%s)", argv[3]);
-    if (fseeko(epf, 32 + bzctrllen + bzdatalen, SEEK_SET))
-        err(1, "fseeko(%s, %lld)", argv[3],
-            (long long) (32 + bzctrllen + bzdatalen));
-    if ((epfbz2 = BZ2_bzReadOpen(&ebz2err, epf, 0, 0, NULL, 0)) == NULL)
-        errx(1, "BZ2_bzReadOpen, bz2err = %d", ebz2err);
+    if (fclose(f)){
+        LOGE_STATUS(1, "fclose(%s)", argv[3]);
+        return -1;
+    }
+    if ((cpf = fopen(argv[3], "r")) == NULL){
+        LOGE_STATUS(1, "cpf open failure, fopen(%s)", argv[3]);
+        return -1;
+    }
+    if (fseeko(cpf, 32, SEEK_SET)){
+        LOGE_STATUS(1, "fseeko(%s, %lld)", argv[3], (long long) 32);
+        return -1;
+    }
+    if ((cpfbz2 = BZ2_bzReadOpen(&cbz2err, cpf, 0, 0, NULL, 0)) == NULL){
+        LOGE_STATUS(1, "BZ2_bzReadOpen, bz2err = %d", cbz2err);
+        return -1;
+    }
+    if ((dpf = fopen(argv[3], "r")) == NULL){
+        LOGE_STATUS(1, "dpf open failure, fopen(%s)", argv[3]);
+        return -1;
+    }
+    if (fseeko(dpf, 32 + bzctrllen, SEEK_SET)){
+        LOGE_STATUS(1, "fseeko(%s, %lld)", argv[3], (long long) (32 + bzctrllen));
+        return -1;
+    }
+    if ((dpfbz2 = BZ2_bzReadOpen(&dbz2err, dpf, 0, 0, NULL, 0)) == NULL){
+        LOGE_STATUS(1, "BZ2_bzReadOpen, bz2err = %d", dbz2err);
+        return -1;
+    }
+    if ((epf = fopen(argv[3], "r")) == NULL){
+        LOGE_STATUS(1, "epf open failure, fopen(%s)", argv[3]);
+        return -1;
+    }
+    if (fseeko(epf, 32 + bzctrllen + bzdatalen, SEEK_SET)){
+        LOGE_STATUS(1, "fseeko(%s, %lld)", argv[3], (long long) (32 + bzctrllen + bzdatalen));
+        return -1;
+    }
+    if ((epfbz2 = BZ2_bzReadOpen(&ebz2err, epf, 0, 0, NULL, 0)) == NULL){
+        LOGE_STATUS(1, "BZ2_bzReadOpen, bz2err = %d", ebz2err);
+        return -1;
+    }
 
     if (((fd = open(argv[1], O_RDONLY, 0)) < 0) ||
         ((oldsize = lseek(fd, 0, SEEK_END)) == -1) ||
         ((old = malloc(oldsize + 1)) == NULL) ||
         (lseek(fd, 0, SEEK_SET) != 0) ||
         (read(fd, old, oldsize) != oldsize) ||
-        (close(fd) == -1))
-        err(1, "%s", argv[1]);
-    if ((new = malloc(newsize + 1)) == NULL) err(1, NULL);
+        (close(fd) == -1)){
+        LOGE_STATUS(1, "%s", argv[1]);
+        return -1;
+    }
+    if ((new = malloc(newsize + 1)) == NULL) {
+        LOGE_STATUS(1, NULL);
+        return -1;
+    }
 
     oldpos = 0;
     newpos = 0;
@@ -154,21 +194,25 @@ int patchMethod(int argc, char *argv[]) {
         /* Read control data */
         for (i = 0; i <= 2; i++) {
             lenread = BZ2_bzRead(&cbz2err, cpfbz2, buf, 8);
-            if ((lenread < 8) || ((cbz2err != BZ_OK) &&
-                                  (cbz2err != BZ_STREAM_END)))
-                errx(1, "Corrupt patch\n");
+            if ((lenread < 8) || ((cbz2err != BZ_OK) && (cbz2err != BZ_STREAM_END))){
+                LOGE_STATUS(1, "Corrupt patch\n");
+                return -1;
+            }
             ctrl[i] = offtin(buf);
         };
 
         /* Sanity-check */
-        if (newpos + ctrl[0] > newsize)
-            errx(1, "Corrupt patch\n");
+        if (newpos + ctrl[0] > newsize){
+            LOGE_STATUS(1, "Corrupt patch\n");
+            return -1;
+        }
 
         /* Read diff string */
         lenread = BZ2_bzRead(&dbz2err, dpfbz2, new + newpos, ctrl[0]);
-        if ((lenread < ctrl[0]) ||
-            ((dbz2err != BZ_OK) && (dbz2err != BZ_STREAM_END)))
-            errx(1, "Corrupt patch\n");
+        if ((lenread < ctrl[0]) || ((dbz2err != BZ_OK) && (dbz2err != BZ_STREAM_END))){
+            LOGE_STATUS(1, "Corrupt patch\n");
+            return -1;
+        }
 
         /* Add old data to diff string */
         for (i = 0; i < ctrl[0]; i++)
@@ -180,14 +224,17 @@ int patchMethod(int argc, char *argv[]) {
         oldpos += ctrl[0];
 
         /* Sanity-check */
-        if (newpos + ctrl[1] > newsize)
-            errx(1, "Corrupt patch\n");
+        if (newpos + ctrl[1] > newsize){
+            LOGE_STATUS(1, "Corrupt patch\n");
+            return -1;
+        }
 
         /* Read extra string */
         lenread = BZ2_bzRead(&ebz2err, epfbz2, new + newpos, ctrl[1]);
-        if ((lenread < ctrl[1]) ||
-            ((ebz2err != BZ_OK) && (ebz2err != BZ_STREAM_END)))
-            errx(1, "Corrupt patch\n");
+        if ((lenread < ctrl[1]) || ((ebz2err != BZ_OK) && (ebz2err != BZ_STREAM_END))){
+            LOGE_STATUS(1, "Corrupt patch\n");
+            return -1;
+        }
 
         /* Adjust pointers */
         newpos += ctrl[1];
@@ -198,13 +245,16 @@ int patchMethod(int argc, char *argv[]) {
     BZ2_bzReadClose(&cbz2err, cpfbz2);
     BZ2_bzReadClose(&dbz2err, dpfbz2);
     BZ2_bzReadClose(&ebz2err, epfbz2);
-    if (fclose(cpf) || fclose(dpf) || fclose(epf))
-        err(1, "fclose(%s)", argv[3]);
+    if (fclose(cpf) || fclose(dpf) || fclose(epf)){
+        LOGE_STATUS(1, "fclose(%s)", argv[3]);
+        return -1;
+    }
 
     /* Write the new file */
-    if (((fd = open(argv[2], O_CREAT | O_TRUNC | O_WRONLY, 0666)) < 0) ||
-        (write(fd, new, newsize) != newsize) || (close(fd) == -1))
-        err(1, "%s", argv[2]);
+    if (((fd = open(argv[2], O_CREAT | O_TRUNC | O_WRONLY, 0666)) < 0) || (write(fd, new, newsize) != newsize) || (close(fd) == -1)){
+        LOGE_STATUS(1, "%s", argv[2]);
+        return -1;
+    }
 
     free(new);
     free(old);
@@ -215,14 +265,11 @@ int patchMethod(int argc, char *argv[]) {
 //--------------------------------------------------------------------------------------------------
 // main 方法 名字改为 patchMethod 别的没有任何更改
 //--------------------------------------------------------------------------------------------------
-#include <jni.h>
-#include <android/log.h>
 
-#define LOGD(fmt, args...) __android_log_print(ANDROID_LOG_DEBUG, "bspatch", fmt, ##args)
-#define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, "bspatch", fmt, ##args)
-
-JNIEXPORT jint JNICALL Java_com_smart_library_util_bspatch_BSPatchUtil_bspatch
-        (JNIEnv *env, jclass cls, jstring basePath, jstring syntheticPath, jstring patchPath) {
+/**
+ * @return -1:失败, 0:成功
+ */
+JNIEXPORT jint JNICALL Java_com_smart_library_util_bspatch_BSPatchUtil_bspatch(JNIEnv *env, jclass cls, jstring basePath, jstring syntheticPath, jstring patchPath) {
     int argc = 4;
     char *argv[argc];
     argv[0] = "bspatch";
