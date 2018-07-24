@@ -7,6 +7,7 @@ object BSPatchUtil {
      * @param patchPath     合成所需要的差分文件
      * @return main 返回值
      */
+    @JvmStatic
     external fun bspatch(basePath: String, syntheticPath: String, patchPath: String): Int
 
     init {

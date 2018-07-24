@@ -92,9 +92,8 @@ android {
     }
 
     android.libraryVariants.all { variant ->
-        variant.outputs.each { output ->
-            def oldFile = output.outputFile
-            output.outputFile.renameTo(new File(oldFile.parent, oldFile.name.replace(variant.buildType.name, "${variant.buildType.name}-${rootProject.ext.versionName}")))
+        variant.outputs.all { output ->
+            outputFileName = output.outputFile.name.replaceAll(variant.name, "${variant.name}-${rootProject.ext.versionName}")
         }
     }
 }
