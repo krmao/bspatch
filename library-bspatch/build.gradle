@@ -1,0 +1,111 @@
+buildscript {
+    ext.kotlin_version = '1.2.51'
+    repositories {
+        jcenter()
+        mavenCentral()
+        maven {
+            url 'https://maven.google.com/'
+            name 'Google'
+        }
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-android-extensions:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "com.android.tools.build:gradle:3.1.3"
+    }
+}
+
+allprojects {
+    repositories {
+        jcenter()
+        mavenCentral()
+        maven { url "https://jitpack.io" }
+        maven {
+            url 'https://maven.google.com/'
+            name 'Google'
+        }
+    }
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile) {
+            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+        }
+    }
+    tasks.withType(Javadoc) {
+        options.encoding = "UTF-8"
+    }
+}
+
+ext {
+    minSdkVersion = 15
+    versionCode = 1
+    versionName = "1.0"
+}
+
+apply plugin: 'com.android.library'
+apply plugin: "kotlin-android"
+apply plugin: 'kotlin-android-extensions'
+
+android {
+    compileSdkVersion 27
+
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+
+        //noinspection OldTargetApi
+        targetSdkVersion 25
+
+        versionCode rootProject.ext.versionCode
+        versionName rootProject.ext.versionName
+
+        externalNativeBuild {
+            cmake {
+                arguments "-DANDROID_PLATFORM=android-${rootProject.ext.minSdkVersion}"
+                // explicitly build libs
+                targets 'bspatch' // 不填就是全部编译
+            }
+        }
+
+        ndk {
+            // Supported ABIs are [armeabi-v7a, arm64-v8a, x86, x86_64]
+            abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'
+        }
+
+    }
+
+    buildTypes {
+        release {
+            postprocessing {
+                removeUnusedCode false
+                removeUnusedResources false
+                obfuscate false
+                optimizeCode false
+                proguardFile 'proguard-rules.pro'
+            }
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+        }
+    }
+
+    android.libraryVariants.all { variant ->
+        variant.outputs.each { output ->
+            def oldFile = output.outputFile
+            output.outputFile.renameTo(new File(oldFile.parent, oldFile.name.replace(variant.buildType.name, "${variant.buildType.name}-${rootProject.ext.versionName}")))
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation 'com.android.support:appcompat-v7:27.1.1'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+}
+
+repositories {
+    mavenCentral()
+}
