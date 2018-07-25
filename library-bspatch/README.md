@@ -26,34 +26,23 @@ please see ./outputs/
 
 ### how to use on android
 ```
-api(name: "library-bspatch-release-1.0", ext: "aar")
+api 'com.smart.library.util:bspatch:0.0.2'
 ```
 
 ```
-fun merge(baseBundleHelper: CXBaseBundleHelper): Boolean {
-    if (!checkTempBundleFileValid()) {
-        if (checkPatchFileValid()) {
-            if (baseBundleHelper.info.version == info.baseVersion) {
-                val tempZipFile = getTempZipFile()
-
-                if (tempZipFile.exists()) {
-                    CXFileUtil.deleteFile(tempZipFile)
-                }
-
-                try {
-                    val result = BSPatchUtil.bspatch(baseBundleHelper.getBaseZipFile().absolutePath, tempZipFile.absolutePath, getTempPatchFile().absolutePath)
-                    CXLogUtil.w(TAG, "bspatch ${if (result == 0) "success" else "failure"}, result=$result")
-                    if (result == 0) {
-                        return checkTempBundleFileValid()
-                    }
-                } catch (e: Exception) {
-                    CXLogUtil.e(TAG, e)
-                }
-            }
-        }
-        return false
-    } else {
-        return true
+try {
+    // first param : base zip file path
+    // second param: dest zip file path
+    // third  param: patch file path
+    val result = BSPatchUtil.bspatch(baseBundleHelper.getBaseZipFile().absolutePath, tempZipFile.absolutePath, getTempPatchFile().absolutePath)
+    
+    if (result == 0) {
+        // success
+    }else {
+        // failure
     }
+    
+} catch (e: Exception) {
+    // failure
 }
 ```
