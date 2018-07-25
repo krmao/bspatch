@@ -44,16 +44,6 @@ allprojects {
     }
 }
 
-subprojects {
-    tasks.withType(Javadoc).all {
-        options.addStringOption('Xdoclint:none', '-quiet')
-        options.addStringOption('encoding', 'UTF-8')
-        options.addStringOption('charSet', 'UTF-8')
-        excludes = ['**/*.kt']
-        enabled = false
-    }
-}
-
 apply plugin: 'com.android.library'
 apply plugin: "kotlin-android"
 apply plugin: 'kotlin-android-extensions'
