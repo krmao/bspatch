@@ -10,7 +10,7 @@
    bzip2/libbzip2 version 1.0.6 of 6 September 2010
    Copyright (C) 1996-2010 Julian Seward <jseward@bzip.org>
 
-   Please read the WARNING, DISCLAIMER and PATENTS sections in the 
+   Please read the WARNING, DISCLAIMER and PATENTS sections in the
    README file.
 
    This program is released under the terms of the license contained
@@ -61,7 +61,7 @@ typedef  unsigned char  Bool;
 
 Char inFileName[BZ_MAX_FILENAME];
 Char outFileName[BZ_MAX_FILENAME];
-Char progName[BZ_MAX_FILENAME];
+Char progRecoverName[BZ_MAX_FILENAME];
 
 MaybeUInt64 bytesOut = 0;
 MaybeUInt64 bytesIn  = 0;
@@ -75,7 +75,7 @@ MaybeUInt64 bytesIn  = 0;
 #define BZ_HDR_Z 0x5a                         /* 'Z' */
 #define BZ_HDR_h 0x68                         /* 'h' */
 #define BZ_HDR_0 0x30                         /* '0' */
- 
+
 
 /*---------------------------------------------------*/
 /*--- I/O errors                                  ---*/
@@ -86,10 +86,10 @@ static void readError ( void )
 {
    fprintf ( stderr,
              "%s: I/O error reading `%s', possible reason follows.\n",
-            progName, inFileName );
-   perror ( progName );
+            progRecoverName, inFileName );
+   perror ( progRecoverName );
    fprintf ( stderr, "%s: warning: output file(s) may be incomplete.\n",
-             progName );
+             progRecoverName );
    exit ( 1 );
 }
 
@@ -99,10 +99,10 @@ static void writeError ( void )
 {
    fprintf ( stderr,
              "%s: I/O error reading `%s', possible reason follows.\n",
-            progName, inFileName );
-   perror ( progName );
+            progRecoverName, inFileName );
+   perror ( progRecoverName );
    fprintf ( stderr, "%s: warning: output file(s) may be incomplete.\n",
-             progName );
+             progRecoverName );
    exit ( 1 );
 }
 
@@ -112,9 +112,9 @@ static void mallocFail ( Int32 n )
 {
    fprintf ( stderr,
              "%s: malloc failed on request for %d bytes.\n",
-            progName, n );
+            progRecoverName, n );
    fprintf ( stderr, "%s: warning: output file(s) may be incomplete.\n",
-             progName );
+             progRecoverName );
    exit ( 1 );
 }
 
@@ -124,13 +124,13 @@ static void tooManyBlocks ( Int32 max_handled_blocks )
 {
    fprintf ( stderr,
              "%s: `%s' appears to contain more than %d blocks\n",
-            progName, inFileName, max_handled_blocks );
+            progRecoverName, inFileName, max_handled_blocks );
    fprintf ( stderr,
              "%s: and cannot be handled.  To fix, increase\n",
-             progName );
-   fprintf ( stderr, 
+             progRecoverName );
+   fprintf ( stderr,
              "%s: BZ_MAX_HANDLED_BLOCKS in bzip2recover.c, and recompile.\n",
-             progName );
+             progRecoverName );
    exit ( 1 );
 }
 

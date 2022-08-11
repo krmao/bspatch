@@ -5,7 +5,7 @@ buildscript {
         compileSdkVersion = 31
         targetSdkVersion = 31
         kotlinVersion = '1.7.0'
-        dokkaVersion = '0.9.18'
+        dokkaVersion = '1.7.10'
 
         if (System.properties['os.arch'] == "aarch64") {
             // For M1 Users we need to use the NDK 24 which added support for aarch64
@@ -15,7 +15,7 @@ buildscript {
             ndkVersion = "21.4.7075529"
         }
 
-        name = "bspatch"
+        name = "library-bspatch"
         versionCode = 1
         versionName = "0.0.3"
 
@@ -45,7 +45,7 @@ buildscript {
 
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
-        classpath "org.jetbrains.dokka:dokka-android-gradle-plugin:$dokkaVersion"
+        classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokkaVersion"
         classpath("com.android.tools.build:gradle:7.0.4")
     }
 }
@@ -59,12 +59,6 @@ allprojects {
 
 apply plugin: 'com.android.library'
 apply plugin: "kotlin-android"
-apply plugin: 'org.jetbrains.dokka-android'
-
-dokka {
-    outputFormat = 'html'
-    outputDirectory = "$buildDir/javadoc"
-}
 
 android {
     ndkVersion rootProject.ext.ndkVersion
@@ -100,3 +94,5 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 }
+
+apply from: "./upload_to_maven_central.gradle"
