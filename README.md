@@ -26,7 +26,8 @@ please see ./outputs/
 
 ### how to use on android
 ```
-api 'com.smart.library.util:bspatch:0.0.2'
+// maven
+implementation 'com.codesdancing.libraries:library-bspatch:0.0.3'
 ```
 
 ```
@@ -46,3 +47,7 @@ try {
     // failure
 }
 ```
+
+### compile project
+- brew install cmake
+- https://stackoverflow.com/a/68158176/4348530
