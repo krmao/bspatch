@@ -48,6 +48,11 @@ try {
 }
 ```
 
+### how to use on ios
+```
+https://github.com/krmao/bspatch-ios
+```
+
 ### compile project
 - brew install cmake
 - https://stackoverflow.com/a/68158176/4348530
