@@ -49,9 +49,8 @@ try {
 ```
 
 ### how to use on ios
-```
-https://github.com/krmao/bspatch-ios
-```
+
+> [https://github.com/krmao/bspatch-ios](https://github.com/krmao/bspatch-ios)
 
 ### compile project
 - brew install cmake
